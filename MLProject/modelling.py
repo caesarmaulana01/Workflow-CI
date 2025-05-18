@@ -42,6 +42,8 @@ def main():
         X, y, test_size=0.25, random_state=7, stratify=y
     )
 
+    # Define input_example for model logging
+    input_example = X_train.iloc[:2]
     # === 5. Enable autologging ===
     mlflow.sklearn.autolog()
 
@@ -67,6 +69,7 @@ def main():
                 "max_depth": max_depth,
                 "model_type": name
             })
+
 
             mlflow.sklearn.log_model(
                 sk_model=model,
