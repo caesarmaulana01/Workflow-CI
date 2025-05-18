@@ -32,8 +32,22 @@ jobs:
 
       - name: Run MLflow Project
         run: |
+          # Run MLflow project with file backend
           mlflow run MLProject \
             --env-manager=local \
             -P n_estimators=${{ env.N_ESTIMATORS }} \
             -P max_depth=${{ env.MAX_DEPTH }} \
-            -P dataset=${{ env.DATASET_FILE }}
+            -P dataset=${{ env.DATASET_FILE }} \
+            --backend-store-uri file://${GITHUB_WORKSPACE}/mlruns
+      
+      - name: Save mlruns to repo
+        run: |
+          # Configure git
+          git config --global user.name ${{ secrets.username }}
+          git config --global user.email ${{ secrets.email }}
+          
+          # Commit and push mlruns
+          git add mlruns/
+          git commit -m "Add mlruns from CI run $(date +'%Y-%m-%d %H:%M:%S')"
+          git push origin $GITHUB_REF_NAME
+
