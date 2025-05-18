@@ -40,6 +40,7 @@ jobs:
       # Jalankan MLflow tanpa hapus mlruns
       - name: Run MLflow project
         run: |
+          find mlruns/0/* -name "meta.yaml" -exec rm -f {} \;
           mlflow run MLProject \
             --env-manager=local \
             -P n_estimators=${{ env.N_ESTIMATORS }} \
