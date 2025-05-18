@@ -3,13 +3,13 @@ name: Workflow CI
 on:
   push:
     branches:
-      - master
+      - Master
   pull_request:
     branches:
-      - master
+      - Master
 
 permissions:
-  contents: write  # ⬅️ PENTING: Izinkan push ke repo
+  contents: write  
 
 env:
   DATASET_FILE: "employee_data_preprocessed.csv"
