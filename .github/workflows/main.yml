@@ -1,4 +1,4 @@
-name: CI MLflow
+name: Workflow CI
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
       # Run MLflow project with parameters
       - name: Run MLflow Project
         run: |
-          mlflow run Project \
+          mlflow run . \
             --env-manager=local \
             -P n_estimators=${{ env.N_ESTIMATORS }} \
             -P max_depth=${{ env.MAX_DEPTH }} \
