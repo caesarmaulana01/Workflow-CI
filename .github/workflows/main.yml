@@ -1,0 +1,41 @@
+name: Workflow CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout repository
+      - uses: actions/checkout@v3
+
+      # Setup Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      # Install Conda (required to use conda.yaml)
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-activate-base: false
+          environment-file: conda.yaml
+          activate-environment: mlflow-env
+          python-version: "3.11"
+
+      # Run MLflow Project using Conda
+      - name: Run MLflow Project
+        run: |
+          mlflow run . \
+            --env-manager=conda \
+            -P n_estimators=100 \
+            -P max_depth=10 \
+            -P dataset=employee_data_preprocessed.csv
