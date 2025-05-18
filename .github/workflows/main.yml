@@ -3,10 +3,10 @@ name: Workflow CI
 on:
   push:
     branches:
-      - master
+      - Master
   pull_request:
     branches:
-      - master
+      - Master
 
 jobs:
   build:
