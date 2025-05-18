@@ -93,4 +93,4 @@ def main():
             print(f"{name} - Precision: {precision:.4f}, Recall: {recall:.4f}")
 
 if __name__ == "__main__":
-    main() 
+    main()
