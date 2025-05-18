@@ -13,16 +13,16 @@ permissions:
 
 env:
   DATASET_FILE: "employee_data_preprocessed.csv"
-  TARGET_VAR: "Credit_Score"
+  N_ESTIMATORS: 100
+  MAX_DEPTH: 10
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repo
-      - name: Checkout code
-        uses: actions/checkout@v3
+      # Checkout repository
+      - uses: actions/checkout@v3
 
       # Setup Python
       - name: Set up Python 3.12.7
@@ -30,34 +30,64 @@ jobs:
         with:
           python-version: "3.12.7"
 
-      # Check environment variables (optional debugging)
-      - name: Check Environment
+      # Check Env Variables (optional debug step)
+      - name: Check Env
         run: |
-          echo "Dataset File: $DATASET_FILE"
-          echo "Target Variable: $TARGET_VAR"
-
+          echo "Dataset file: $DATASET_FILE"
       # Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mlflow
-
-      # Run MLflow project
+          pip install mlflow scikit-learn pandas          
+          
+      # Run MLflow Project
       - name: Run MLflow project
         run: |
-          mlflow run MLproject --env-manager=local
+          mlflow run MLProject \
+            --env-manager=local \
+            -P n_estimators=${{ env.N_ESTIMATORS }} \
+            -P max_depth=${{ env.MAX_DEPTH }} \
+            -P dataset=${{ env.DATASET_FILE }}
 
-      # Get latest MLflow run_id
+      - name: Verify model artifacts
+        run: |
+          echo "Checking saved models..."
+          find mlruns -name "model" -type d
+          ls -R mlruns/0/*/artifacts/
+          
+      # Get latest run_id
       - name: Get latest MLflow run_id
+        id: get-run-id
+        working-directory: .
         run: |
+          # Get the latest run ID
           RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
           echo "Latest run_id: $RUN_ID"
-
-      # Build Docker Image from trained model
-      - name: Build Docker Image
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+          
+          # Verify model exists
+          MODEL_PATH="mlruns/0/$RUN_ID/artifacts/model"
+          if [ ! -d "$MODEL_PATH" ]; then
+            echo "Error: Model not found at $MODEL_PATH"
+            exit 1
+          fi
+          
+      - name: Track mlruns with Git LFS and commit
         run: |
-          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "cc"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git lfs install
+          git lfs track "mlruns/**"
+          git add .gitattributes
+          git add mlruns/
+          git checkout $GITHUB_REF_NAME
+          git diff --staged --quiet || git commit -m "Track mlruns using Git LFS from CI on $(date +'%Y-%m-%d %H:%M:%S')"
+          git push origin $GITHUB_REF_NAME
+
+      # Build Docker image with the model
+      - name: Build Docker Model
+        run: |
+          mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "employee-model"
 
       # Login to Docker Hub
       - name: Log in to Docker Hub
@@ -66,12 +96,12 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # Tag Docker Image
+      # Tag the Docker image
       - name: Tag Docker Image
         run: |
-          docker tag cc ${{ secrets.DOCKER_HUB_USERNAME }}/cc:latest
+          docker tag employee-model ${{ secrets.DOCKER_HUB_USERNAME }}/employee-model:latest
 
-      # Push Docker Image to Docker Hub
+      # Push Docker image
       - name: Push Docker Image
         run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/cc:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/employee-model:latest
