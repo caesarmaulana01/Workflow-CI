@@ -40,6 +40,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install mlflow scikit-learn pandas          
+      - name: Clean mlruns metadata
+        run: |
+          echo "Cleaning old mlruns metadata..."
+          find mlruns/0/* -name "meta.yaml" -exec rm -f {} \;
+      - name: Remove corrupted mlruns if exists
+        run: |
+          if [ -d "mlruns" ]; then
+            echo "Deleting existing mlruns directory to prevent corruption"
+            rm -rf mlruns
+          fi
 
       # Run MLflow Project
       - name: Run MLflow project
