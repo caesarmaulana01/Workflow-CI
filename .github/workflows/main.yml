@@ -15,7 +15,6 @@ env:
   DATASET_FILE: "employee_data_preprocessed.csv"
   N_ESTIMATORS: 100
   MAX_DEPTH: 10
-  MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/mlruns"
 
 jobs:
   build:
@@ -31,63 +30,38 @@ jobs:
         with:
           python-version: "3.12.7"
 
+      # Check Env Variables (optional debug step)
+      - name: Check Env
+        run: |
+          echo "Dataset file: $DATASET_FILE"
       # Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mlflow scikit-learn pandas pyyaml
-          pip list
-
-      # Initialize MLflow tracking properly
-      - name: Setup MLflow Tracking
-        run: |
-          # Clean existing mlruns
-          rm -rf mlruns
+          pip install mlflow scikit-learn pandas          
           
-          # Create fresh directory structure
-          mkdir -p mlruns/0
-          
-          # Initialize MLflow properly
-          python -c "
-          import mlflow
-          mlflow.set_tracking_uri('file://${{ github.workspace }}/mlruns')
-          mlflow.create_experiment('Default', '${{ github.workspace }}/mlruns/0')
-          "
-          
-          # Verify structure
-          echo "MLflow tracking structure:"
-          ls -la mlruns/
-          ls -la mlruns/0/
-
-      # Debug: Show files
-      - name: Debug Files
-        run: |
-          echo "MLproject contents:"
-          cat MLProject/MLproject || cat MLproject
-          echo ""
-          echo "Dataset file exists:"
-          ls -la MLProject/employee_data_preprocessed.csv || echo "Dataset file not found"
-          echo ""
-          echo "modelling.py exists:"
-          ls -la MLProject/modelling.py
-
-      # Run MLflow Project with explicit tracking URI
+      # Run MLflow Project
       - name: Run MLflow project
         run: |
           mlflow run MLProject \
             --env-manager=local \
             -P n_estimators=${{ env.N_ESTIMATORS }} \
             -P max_depth=${{ env.MAX_DEPTH }} \
-            -P dataset=${{ env.DATASET_FILE }} \
-            --experiment-name Default
+            -P dataset=${{ env.DATASET_FILE }}
 
+      - name: Verify model artifacts
+        run: |
+          echo "Checking saved models..."
+          find mlruns -name "model" -type d
+          ls -R mlruns/0/*/artifacts/
+          
       # Get latest run_id
       - name: Get latest MLflow run_id
-        id: get-run-id
+        working-directory: .
         run: |
-          RUN_ID=$(ls -td mlruns/0/*/ | grep -v meta.yaml | head -n 1 | cut -d'/' -f4)
+          # Get the latest run ID
+          RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
           echo "Latest run_id: $RUN_ID"
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
           
           # Verify model exists
           MODEL_PATH="mlruns/0/$RUN_ID/artifacts/model"
@@ -95,8 +69,7 @@ jobs:
             echo "Error: Model not found at $MODEL_PATH"
             exit 1
           fi
-
-      # Rest of your steps...
+          
       - name: Track mlruns with Git LFS and commit
         run: |
           git config --global user.name "github-actions[bot]"
@@ -108,21 +81,16 @@ jobs:
           git checkout $GITHUB_REF_NAME
           git diff --staged --quiet || git commit -m "Track mlruns using Git LFS from CI on $(date +'%Y-%m-%d %H:%M:%S')"
           git push origin $GITHUB_REF_NAME
-
-      - name: Build Docker Model
+          
+      - name: Build and Push Docker Image
+        env:
+          IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/cc:latest
         run: |
-          mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "employee-model"
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Tag Docker Image
-        run: |
-          docker tag employee-model ${{ secrets.DOCKER_HUB_USERNAME }}/employee-model:latest
-
-      - name: Push Docker Image
-        run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/employee-model:latest
+          echo "Logging into Docker Hub..."
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          
+          echo "Building Docker image..."
+          docker build -t $IMAGE_NAME .
+          
+          echo "Pushing image to Docker Hub..."
+          docker push $IMAGE_NAME
