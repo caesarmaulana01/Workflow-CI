@@ -52,6 +52,7 @@ jobs:
 
       # Get latest run_id
       - name: Get latest MLflow run_id
+        working-directory: ./Workflow-CI
         run: |
           RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
