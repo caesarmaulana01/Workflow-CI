@@ -34,12 +34,13 @@ jobs:
       - name: Check Env
         run: |
           echo "Dataset file: $DATASET_FILE"
+
       # Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install mlflow scikit-learn pandas          
-          
+
       # Run MLflow Project
       - name: Run MLflow project
         run: |
@@ -49,6 +50,7 @@ jobs:
             -P max_depth=${{ env.MAX_DEPTH }} \
             -P dataset=${{ env.DATASET_FILE }}
 
+      # Verify model artifacts
       - name: Verify model artifacts
         run: |
           echo "Checking saved models..."
@@ -57,27 +59,23 @@ jobs:
           
       # Get latest run_id
       - name: Get latest MLflow run_id
-        working-directory: .
         run: |
-          # Get the latest run ID
           RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
           echo "Latest run_id: $RUN_ID"
-          
-          # Verify model exists
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+
           MODEL_PATH="mlruns/0/$RUN_ID/artifacts/model"
           if [ ! -d "$MODEL_PATH" ]; then
             echo "Error: Model not found at $MODEL_PATH"
             exit 1
           fi
-          
-      - name: Track mlruns with Git LFS and commit
+
+      # Save models to GitHub Repository (replaces Git LFS)
+      - name: Save mlruns to repo
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git lfs install
-          git lfs track "mlruns/**"
-          git add .gitattributes
+          git config --global user.name "${{ secrets.username }}"
+          git config --global user.email "${{ secrets.email }}"
+          git pull origin master
           git add mlruns/
-          git checkout $GITHUB_REF_NAME
-          git diff --staged --quiet || git commit -m "Track mlruns using Git LFS from CI on $(date +'%Y-%m-%d %H:%M:%S')"
-          git push origin $GITHUB_REF_NAME
+          git commit -m "Save mlruns from CI run at $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
+          git push origin master
