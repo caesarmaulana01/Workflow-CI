@@ -35,6 +35,15 @@ dagshub.init(repo_owner='caesarmaulana01', repo_name='mlsystems_employee_attriti
 # === 4. Load Dataset ===
 base_path = Path(__file__).resolve().parent
 csv_path = base_path / dataset_file
+
+# Tambahkan pengecekan file
+if not csv_path.exists():
+    # Coba path alternatif jika file tidak ditemukan
+    csv_path = base_path.parent / dataset_file
+    if not csv_path.exists():
+        raise FileNotFoundError(f"Dataset not found at any of: {[str(base_path / dataset_file), str(base_path.parent / dataset_file)]}")
+
+print(f"Loading dataset from: {csv_path}")  # Debugging
 data = pd.read_csv(csv_path)
 
 X = data.drop(columns=['Attrition'])
