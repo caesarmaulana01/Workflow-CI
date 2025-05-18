@@ -38,7 +38,6 @@ jobs:
             -P n_estimators=${{ env.N_ESTIMATORS }} \
             -P max_depth=${{ env.MAX_DEPTH }} \
             -P dataset=${{ env.DATASET_FILE }} \
-            --backend-store-uri file://${GITHUB_WORKSPACE}/mlruns
       
       - name: Save mlruns to repo
         run: |
