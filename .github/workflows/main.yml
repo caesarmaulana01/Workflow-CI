@@ -40,12 +40,26 @@ jobs:
       # Jalankan MLflow tanpa hapus mlruns
       - name: Run MLflow project
         run: |
-          find mlruns/0/* -name "meta.yaml" -exec rm -f {} \;
-          mlflow run MLProject \
-            --env-manager=local \
-            -P n_estimators=${{ env.N_ESTIMATORS }} \
-            -P max_depth=${{ env.MAX_DEPTH }} \
-            -P dataset=${{ env.DATASET_FILE }}
+          # Hapus seluruh folder mlruns jika ada
+          rm -rf mlruns
+          
+          # Buat folder structure dari scratch
+          mkdir -p mlruns/0
+          
+          # Buat meta.yaml dengan format yang benar
+          cat > mlruns/0/meta.yaml <<EOL
+          experiment_id: '0'
+          name: Default
+          artifact_location: file://$GITHUB_WORKSPACE/mlruns/0
+          lifecycle_stage: active
+          tags: {}
+          EOL
+          
+          # Set permission yang benar
+          chmod -R a+rwx mlruns
+          
+          echo "MLflow tracking initialized"
+          ls -la mlruns/0/
 
       - name: Verify model artifacts
         run: |
