@@ -40,11 +40,9 @@ jobs:
       # Jalankan MLflow tanpa hapus mlruns
       - name: Run MLflow project
         run: |
-          # Hapus seluruh folder mlruns jika ada
-          rm -rf mlruns
-          
-          # Buat folder structure dari scratch
-          mkdir -p mlruns/0
+          if [ -d "mlruns" ]; then
+            rm -rf mlruns
+          fi
           
           # Buat meta.yaml dengan format yang benar
           cat > mlruns/0/meta.yaml <<EOL
