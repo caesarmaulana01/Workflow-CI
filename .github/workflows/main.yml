@@ -81,16 +81,3 @@ jobs:
           git checkout $GITHUB_REF_NAME
           git diff --staged --quiet || git commit -m "Track mlruns using Git LFS from CI on $(date +'%Y-%m-%d %H:%M:%S')"
           git push origin $GITHUB_REF_NAME
-          
-      - name: Build and Push Docker Image
-        env:
-          IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/cc:latest
-        run: |
-          echo "Logging into Docker Hub..."
-          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
-          
-          echo "Building Docker image..."
-          docker build -t $IMAGE_NAME .
-          
-          echo "Pushing image to Docker Hub..."
-          docker push $IMAGE_NAME
