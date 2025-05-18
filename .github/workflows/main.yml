@@ -15,7 +15,7 @@ env:
   DATASET_FILE: "employee_data_preprocessed.csv"
   N_ESTIMATORS: 100
   MAX_DEPTH: 10
-  MLFLOW_TRACKING_URI: "./mlruns"
+  MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/mlruns"
 
 jobs:
   build:
@@ -31,12 +31,6 @@ jobs:
         with:
           python-version: "3.12.7"
 
-      # Check Env Variables
-      - name: Check Env
-        run: |
-          echo "Dataset file: $DATASET_FILE"
-          echo "MLflow tracking URI: $MLFLOW_TRACKING_URI"
-
       # Install dependencies
       - name: Install dependencies
         run: |
@@ -44,37 +38,40 @@ jobs:
           pip install mlflow scikit-learn pandas pyyaml
           pip list
 
-      # Clean and initialize MLflow tracking
-      - name: Initialize MLflow Tracking
+      # Initialize MLflow tracking properly
+      - name: Setup MLflow Tracking
         run: |
-          # Remove existing mlruns directory if it exists
+          # Clean existing mlruns
           rm -rf mlruns
           
           # Create fresh directory structure
           mkdir -p mlruns/0
           
-          # Create basic meta.yaml file
-          cat > mlruns/0/meta.yaml <<EOL
-          experiment_id: '0'
-          name: Default
-          artifact_location: ./mlruns/0
-          lifecycle_stage: active
-          tags: {}
-          EOL
+          # Initialize MLflow properly
+          python -c "
+          import mlflow
+          mlflow.set_tracking_uri('file://${{ github.workspace }}/mlruns')
+          mlflow.create_experiment('Default', '${{ github.workspace }}/mlruns/0')
+          "
           
-          echo "MLflow tracking initialized at $MLFLOW_TRACKING_URI"
+          # Verify structure
+          echo "MLflow tracking structure:"
+          ls -la mlruns/
           ls -la mlruns/0/
 
-      # Debug: Show MLproject file contents
-      - name: Debug MLproject
+      # Debug: Show files
+      - name: Debug Files
         run: |
-          echo "MLproject file contents:"
+          echo "MLproject contents:"
           cat MLProject/MLproject || cat MLproject
           echo ""
-          echo "Directory structure:"
-          ls -la
+          echo "Dataset file exists:"
+          ls -la MLProject/employee_data_preprocessed.csv || echo "Dataset file not found"
+          echo ""
+          echo "modelling.py exists:"
+          ls -la MLProject/modelling.py
 
-      # Run MLflow Project
+      # Run MLflow Project with explicit tracking URI
       - name: Run MLflow project
         run: |
           mlflow run MLProject \
@@ -82,21 +79,13 @@ jobs:
             -P n_estimators=${{ env.N_ESTIMATORS }} \
             -P max_depth=${{ env.MAX_DEPTH }} \
             -P dataset=${{ env.DATASET_FILE }} \
-            --experiment-id 0
+            --experiment-name Default
 
-      - name: Verify model artifacts
-        run: |
-          echo "Checking saved models..."
-          find mlruns -name "model" -type d
-          ls -R mlruns/0/*/artifacts/
-          
       # Get latest run_id
       - name: Get latest MLflow run_id
         id: get-run-id
-        working-directory: .
         run: |
-          # Get the latest run ID
-          RUN_ID=$(ls -td mlruns/0/*/ | grep -v meta.yaml | head -n 1 | cut -d'/' -f3)
+          RUN_ID=$(ls -td mlruns/0/*/ | grep -v meta.yaml | head -n 1 | cut -d'/' -f4)
           echo "Latest run_id: $RUN_ID"
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
           
@@ -106,7 +95,8 @@ jobs:
             echo "Error: Model not found at $MODEL_PATH"
             exit 1
           fi
-          
+
+      # Rest of your steps...
       - name: Track mlruns with Git LFS and commit
         run: |
           git config --global user.name "github-actions[bot]"
@@ -119,24 +109,20 @@ jobs:
           git diff --staged --quiet || git commit -m "Track mlruns using Git LFS from CI on $(date +'%Y-%m-%d %H:%M:%S')"
           git push origin $GITHUB_REF_NAME
 
-      # Build Docker image with the model
       - name: Build Docker Model
         run: |
           mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "employee-model"
 
-      # Login to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # Tag the Docker image
       - name: Tag Docker Image
         run: |
           docker tag employee-model ${{ secrets.DOCKER_HUB_USERNAME }}/employee-model:latest
 
-      # Push Docker image
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/employee-model:latest
