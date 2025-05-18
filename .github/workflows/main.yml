@@ -3,10 +3,13 @@ name: Workflow CI
 on:
   push:
     branches:
-      - Master
+      - master
   pull_request:
     branches:
-      - Master
+      - master
+
+permissions:
+  contents: write  # ⬅️ PENTING: Izinkan push ke repo
 
 env:
   DATASET_FILE: "employee_data_preprocessed.csv"
@@ -32,21 +35,21 @@ jobs:
 
       - name: Run MLflow Project
         run: |
-          # Run MLflow project with file backend
           mlflow run MLProject \
             --env-manager=local \
             -P n_estimators=${{ env.N_ESTIMATORS }} \
             -P max_depth=${{ env.MAX_DEPTH }} \
-            -P dataset=${{ env.DATASET_FILE }} \
-      
+            -P dataset=${{ env.DATASET_FILE }}
+
       - name: Save mlruns to repo
         run: |
-          # Configure git
-          git config --global user.name ${{ secrets.username }}
-          git config --global user.email ${{ secrets.email }}
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Commit and push mlruns
+          git checkout $GITHUB_REF_NAME
           git add mlruns/
-          git commit -m "Add mlruns from CI run $(date +'%Y-%m-%d %H:%M:%S')"
+          
+          # Commit only if there are changes
+          git diff --staged --quiet || git commit -m "Add mlruns from CI run on $(date +'%Y-%m-%d %H:%M:%S')"
+          
           git push origin $GITHUB_REF_NAME
-
