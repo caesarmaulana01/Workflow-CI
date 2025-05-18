@@ -1,0 +1,15 @@
+artifact_uri: file:///home/runner/work/Workflow-CI/Workflow-CI/mlruns/0/2ae4e969e10a4b77af35cc6cb4938492/artifacts
+end_time: 1747556272891
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 2ae4e969e10a4b77af35cc6cb4938492
+run_name: bold-fowl-375
+run_uuid: 2ae4e969e10a4b77af35cc6cb4938492
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1747556262529
+status: 3
+tags: []
+user_id: runner
