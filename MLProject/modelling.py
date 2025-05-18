@@ -83,6 +83,8 @@ def main():
                 "precision": precision,
                 "recall": recall
             })
+            mlflow.sklearn.log_model(model, "model")
+            mlflow.xgboost.log_model(model, "model")
             
             print(f"{name} - Precision: {precision:.4f}, Recall: {recall:.4f}")
 
