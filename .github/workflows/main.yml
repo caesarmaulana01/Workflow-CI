@@ -21,37 +21,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repository
       - uses: actions/checkout@v3
 
-      # Setup Python
       - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
         with:
           python-version: "3.12.7"
 
-      # Check Env Variables (optional debug step)
       - name: Check Env
         run: |
           echo "Dataset file: $DATASET_FILE"
 
-      # Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mlflow scikit-learn pandas          
-      - name: Clean mlruns metadata
-        run: |
-          echo "Cleaning old mlruns metadata..."
-          find mlruns/0/* -name "meta.yaml" -exec rm -f {} \;
-      - name: Remove corrupted mlruns if exists
-        run: |
-          if [ -d "mlruns" ]; then
-            echo "Deleting existing mlruns directory to prevent corruption"
-            rm -rf mlruns
-          fi
+          pip install mlflow scikit-learn pandas
 
-      # Run MLflow Project
+      # Jalankan MLflow tanpa hapus mlruns
       - name: Run MLflow project
         run: |
           mlflow run MLProject \
@@ -60,14 +46,12 @@ jobs:
             -P max_depth=${{ env.MAX_DEPTH }} \
             -P dataset=${{ env.DATASET_FILE }}
 
-      # Verify model artifacts
       - name: Verify model artifacts
         run: |
           echo "Checking saved models..."
           find mlruns -name "model" -type d
           ls -R mlruns/0/*/artifacts/
-          
-      # Get latest run_id
+
       - name: Get latest MLflow run_id
         run: |
           RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
@@ -80,12 +64,11 @@ jobs:
             exit 1
           fi
 
-      # Save models to GitHub Repository (replaces Git LFS)
       - name: Save mlruns to repo
         run: |
           git config --global user.name "${{ secrets.username }}"
           git config --global user.email "${{ secrets.email }}"
           git pull origin Master
           git add mlruns/
-          git commit -m "Save mlruns from CI run at $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
+          git commit -m "Update mlruns from CI run at $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
           git push origin Master
