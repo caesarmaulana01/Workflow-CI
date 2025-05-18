@@ -8,7 +8,7 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_score, recall_score
 from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
+from sklearn.linear_model import LogisticRegression
 
 def main():
     # === 1. Parsing arguments ===
@@ -51,12 +51,10 @@ def main():
             n_estimators=n_estimators, 
             max_depth=max_depth, 
             random_state=7)),
-        ('XGBoost', XGBClassifier(
-            n_estimators=n_estimators, 
-            max_depth=max_depth, 
-            use_label_encoder=False, 
-            eval_metric='logloss', 
-            random_state=7))
+        ('Logistic Regression', LogisticRegression(
+            solver='liblinear',
+            random_state=7,
+            class_weight='balanced'))
     ]
 
     for name, model in models:
@@ -69,6 +67,12 @@ def main():
                 "max_depth": max_depth,
                 "model_type": name
             })
+
+            mlflow.sklearn.log_model(
+                sk_model=model,
+                artifact_path="model",
+                input_example=input_example
+            )
             
             # Train model
             model.fit(X_train, y_train)
@@ -83,8 +87,6 @@ def main():
                 "precision": precision,
                 "recall": recall
             })
-            mlflow.sklearn.log_model(model, "model")
-            mlflow.xgboost.log_model(model, "model")
             
             print(f"{name} - Precision: {precision:.4f}, Recall: {recall:.4f}")
 
