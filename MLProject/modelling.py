@@ -70,15 +70,14 @@ def main():
                 "model_type": name
             })
 
+            # Train model
+            model.fit(X_train, y_train)
 
             mlflow.sklearn.log_model(
                 sk_model=model,
                 artifact_path="model",
                 input_example=input_example
             )
-            
-            # Train model
-            model.fit(X_train, y_train)
             
             # Evaluate
             y_pred = model.predict(X_test)
