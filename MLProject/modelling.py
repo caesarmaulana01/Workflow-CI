@@ -21,10 +21,6 @@ def main():
     n_estimators = args.n_estimators
     max_depth = args.max_depth
     dataset_file = args.dataset
-
-    # === 2. Setup MLflow Tracking ===
-    mlflow.set_tracking_uri("http://127.0.0.1:5000")  # Local MLflow server
-    mlflow.set_experiment("Employee_Attrition_Modeling")
     
     # === 3. Load Dataset ===
     base_path = Path(__file__).resolve().parent
