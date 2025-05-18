@@ -1,0 +1,42 @@
+digest: ddc5719f
+name: dataset
+profile: '{"num_rows": 265, "num_elements": 11660}'
+schema: '{"mlflow_colspec": [{"type": "double", "name": "Age", "required": true},
+  {"type": "double", "name": "DailyRate", "required": true}, {"type": "double", "name":
+  "DistanceFromHome", "required": true}, {"type": "double", "name": "Education", "required":
+  true}, {"type": "double", "name": "EnvironmentSatisfaction", "required": true},
+  {"type": "double", "name": "Gender", "required": true}, {"type": "double", "name":
+  "HourlyRate", "required": true}, {"type": "double", "name": "JobInvolvement", "required":
+  true}, {"type": "double", "name": "JobLevel", "required": true}, {"type": "double",
+  "name": "JobSatisfaction", "required": true}, {"type": "double", "name": "MonthlyIncome",
+  "required": true}, {"type": "double", "name": "MonthlyRate", "required": true},
+  {"type": "double", "name": "NumCompaniesWorked", "required": true}, {"type": "double",
+  "name": "OverTime", "required": true}, {"type": "double", "name": "PercentSalaryHike",
+  "required": true}, {"type": "double", "name": "PerformanceRating", "required": true},
+  {"type": "double", "name": "RelationshipSatisfaction", "required": true}, {"type":
+  "double", "name": "StockOptionLevel", "required": true}, {"type": "double", "name":
+  "TotalWorkingYears", "required": true}, {"type": "double", "name": "TrainingTimesLastYear",
+  "required": true}, {"type": "double", "name": "WorkLifeBalance", "required": true},
+  {"type": "double", "name": "YearsAtCompany", "required": true}, {"type": "double",
+  "name": "YearsInCurrentRole", "required": true}, {"type": "double", "name": "YearsSinceLastPromotion",
+  "required": true}, {"type": "double", "name": "YearsWithCurrManager", "required":
+  true}, {"type": "double", "name": "BusinessTravel_Travel_Frequently", "required":
+  true}, {"type": "double", "name": "BusinessTravel_Travel_Rarely", "required": true},
+  {"type": "double", "name": "Department_Research & Development", "required": true},
+  {"type": "double", "name": "Department_Sales", "required": true}, {"type": "double",
+  "name": "EducationField_Life Sciences", "required": true}, {"type": "double", "name":
+  "EducationField_Marketing", "required": true}, {"type": "double", "name": "EducationField_Medical",
+  "required": true}, {"type": "double", "name": "EducationField_Other", "required":
+  true}, {"type": "double", "name": "EducationField_Technical Degree", "required":
+  true}, {"type": "double", "name": "JobRole_Human Resources", "required": true},
+  {"type": "double", "name": "JobRole_Laboratory Technician", "required": true}, {"type":
+  "double", "name": "JobRole_Manager", "required": true}, {"type": "double", "name":
+  "JobRole_Manufacturing Director", "required": true}, {"type": "double", "name":
+  "JobRole_Research Director", "required": true}, {"type": "double", "name": "JobRole_Research
+  Scientist", "required": true}, {"type": "double", "name": "JobRole_Sales Executive",
+  "required": true}, {"type": "double", "name": "JobRole_Sales Representative", "required":
+  true}, {"type": "double", "name": "MaritalStatus_Married", "required": true}, {"type":
+  "double", "name": "MaritalStatus_Single", "required": true}]}'
+source: '{"tags": {"mlflow.user": "runner", "mlflow.source.name": "modelling.py",
+  "mlflow.source.type": "LOCAL", "mlflow.source.git.commit": "57b7076f0af28ed28ce4788347b8f532c7577918"}}'
+source_type: code
